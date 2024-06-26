@@ -4,6 +4,7 @@ import (
 	"autoBron"
 	"autoBron/pkg/handler"
 	"autoBron/pkg/repository"
+	"autoBron/pkg/repository/postgres"
 	"autoBron/pkg/service"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -24,7 +25,7 @@ func main() {
 		logrus.Fatalf("Can not load env variable: %s", err.Error())
 	}
 
-	db, err := repository.NewPostgresDB(repository.Config{
+	db, err := postgres.NewPostgresDB(postgres.Config{
 		Username: viper.GetString("db.username"),
 		Password: os.Getenv("DB_PASSWORD"),
 	})

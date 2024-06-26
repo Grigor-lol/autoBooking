@@ -2,24 +2,19 @@ package repository
 
 import (
 	"autoBron"
+	"autoBron/pkg/repository/postgres"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
-type Database interface {
+type Repository interface {
 	CheckAvailability(id int, period *autoBron.AvailabilityPeriod) (bool, error)
 	CreateBooking(booking *autoBron.BookingRequest) error
-	GenerateReport() (*autoBron.Report, error)
+	GetCarUsageReport(startDate, endDate time.Time) ([]autoBron.CarUsage, error)
 
 	HasBufferPeriod(carID int, startDate, endDate time.Time) (bool, error)
 }
 
-type Repository struct {
-	Database
-}
-
-func NewRepository(db *sqlx.DB) *Repository {
-	return &Repository{
-		Database: newPostgreSql(db),
-	}
+func NewRepository(db *sqlx.DB) Repository {
+	return postgres.NewPostgreSql(db)
 }

@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"autoBron"
@@ -10,7 +10,7 @@ type PostgreDB struct {
 	db *sqlx.DB
 }
 
-func newPostgreSql(db *sqlx.DB) *PostgreDB {
+func NewPostgreSql(db *sqlx.DB) *PostgreDB {
 	return &PostgreDB{
 		db: db,
 	}
@@ -43,8 +43,24 @@ func (r *PostgreDB) CreateBooking(booking *autoBron.BookingRequest) error {
 	return err
 }
 
-func (r *PostgreDB) GenerateReport() (*autoBron.Report, error) {
-	return nil, nil
+func (r *PostgreDB) GetCarUsageReport(startDate, endDate time.Time) ([]autoBron.CarUsage, error) {
+	query := `
+	SELECT 
+		c.id as car_id,
+		c.car_number as car_number,
+		SUM(
+			LEAST($2, b.end_date) - GREATEST($1, b.start_date) + 1
+		) as days_rented
+	FROM 
+		cars c
+	LEFT JOIN 
+		bookings b ON c.id = b.car_id AND b.start_date <= $2 AND b.end_date >= $1
+	GROUP BY 
+		c.id, c.car_number
+	`
+	var reports []autoBron.CarUsage
+	err := r.db.Select(&reports, query, startDate, endDate)
+	return reports, err
 }
 
 func (r *PostgreDB) HasBufferPeriod(carID int, startDate, endDate time.Time) (bool, error) {
@@ -55,8 +71,8 @@ func (r *PostgreDB) HasBufferPeriod(carID int, startDate, endDate time.Time) (bo
 	FROM bookings 
 	WHERE car_id = $1 
 	AND (
-		(start_date <= $2 AND end_date < $2 - interval '3 days') OR 
-		(start_date > $3 + interval '3 days' AND end_date >= $3)
+		(end_date >= ($2::timestamp - interval '3 days' )) AND 
+		(start_date <= ($3::timestamp + interval '3 days'))
 	)
 	`
 

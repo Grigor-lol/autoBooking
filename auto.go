@@ -13,5 +13,13 @@ type AvailabilityPeriod struct {
 	EndDate   time.Time `json:"end_date" binding:"required"`
 }
 
-type Report struct {
+type CarUsage struct {
+	CarID      int    `db:"car_id"`
+	CarNumber  string `db:"car_number"`
+	DaysRented int    `db:"days_rented"`
+}
+
+type CarUsageReport struct {
+	CarNumber string  `json:"car_number"`
+	UsageRate float64 `json:"usage_rate"`
 }

@@ -8,7 +8,7 @@ import (
 type Service interface {
 	CheckAvailability(id int, period *autoBron.AvailabilityPeriod) (bool, error)
 	CreateBooking(booking *autoBron.BookingRequest) error
-	GenerateReport() (*autoBron.Report, error)
+	GenerateReport(month uint8, year int) ([]autoBron.CarUsageReport, float64, error)
 	CalculateRentalCost(id int, period *autoBron.AvailabilityPeriod) (float32, error)
 }
 

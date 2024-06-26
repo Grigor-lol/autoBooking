@@ -12,7 +12,9 @@ func (s *Service) CheckAvailability(id int, period *autoBron.AvailabilityPeriod)
 
 func (s *Service) CreateBooking(booking *autoBron.BookingRequest) error {
 	// Проверка: срок аренды от 1 до 30 дней
-	if booking.EndDate.Before(booking.StartDate) || booking.EndDate.Sub(booking.StartDate).Hours()/24 > 30 {
+	if booking.EndDate.Before(booking.StartDate) ||
+		booking.EndDate.Sub(booking.StartDate) > 30*24*time.Hour ||
+		booking.EndDate.Sub(booking.StartDate) < 24*time.Hour {
 		return errors.New("rental period must be between 1 and 30 days")
 	}
 
@@ -44,13 +46,39 @@ func (s *Service) CreateBooking(booking *autoBron.BookingRequest) error {
 	return s.repo.CreateBooking(booking)
 }
 
-func (s *Service) GenerateReport() (*autoBron.Report, error) {
-	return s.repo.GenerateReport()
+func (s *Service) GenerateReport(month uint8, year int) ([]autoBron.CarUsageReport, float64, error) {
+	startDate := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	endDate := startDate.AddDate(0, 1, -1)
+
+	reports, err := s.repo.GetCarUsageReport(startDate, endDate)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Определение общего количества рабочих дней в месяце
+	workDays := countWorkdays(startDate, endDate)
+
+	var totalUsage float64
+	var usageReports []autoBron.CarUsageReport
+
+	for _, report := range reports {
+		usageRate := float64(report.DaysRented) / float64(workDays) * 100
+		usageReports = append(usageReports, autoBron.CarUsageReport{
+			CarNumber: report.CarNumber,
+			UsageRate: usageRate,
+		})
+		totalUsage += usageRate
+	}
+
+	averageUsage := totalUsage / float64(len(reports))
+	return usageReports, averageUsage, nil
 }
 
 func (s *Service) CalculateRentalCost(id int, period *autoBron.AvailabilityPeriod) (float32, error) {
 	// Проверка: срок аренды от 1 до 30 дней
-	if period.EndDate.Before(period.StartDate) || period.EndDate.Sub(period.StartDate).Hours()/24 > 30 {
+	if period.EndDate.Before(period.StartDate) ||
+		period.EndDate.Sub(period.StartDate) > 30*24*time.Hour ||
+		period.EndDate.Sub(period.StartDate) < 24*time.Hour {
 		return 0, errors.New("rental period must be between 1 and 30 days")
 	}
 
@@ -89,4 +117,14 @@ func (s *Service) CalculateRentalCost(id int, period *autoBron.AvailabilityPerio
 	}
 
 	return cost, nil
+}
+
+func countWorkdays(startDate, endDate time.Time) int {
+	workDays := 0
+	for date := startDate; !date.After(endDate); date = date.AddDate(0, 0, 1) {
+		if date.Weekday() != time.Saturday && date.Weekday() != time.Sunday {
+			workDays += 1
+		}
+	}
+	return workDays
 }

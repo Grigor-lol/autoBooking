@@ -4,6 +4,7 @@ import (
 	"autoBron"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 )
@@ -38,6 +39,8 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 		return
 	}
 
+	logrus.Info(req.StartDate)
+
 	err := h.service.CreateBooking(req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -48,13 +51,38 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 }
 
 func (h *Handler) GenerateReport(c *gin.Context) {
-	report, err := h.service.GenerateReport()
+	month, err := strconv.Atoi(c.Param("month"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid month parameter: %s", err.Error())})
+		return
+	}
+
+	if month < 1 || month > 12 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid month, should be from 1 to 12"})
+		return
+	}
+
+	year, err := strconv.Atoi(c.Param("year"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid year parameter: %s", err.Error())})
+		return
+	}
+
+	if year < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid year"})
+		return
+	}
+
+	usageReports, averageUsage, err := h.service.GenerateReport(uint8(month), year)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, report)
+	c.JSON(http.StatusOK, gin.H{
+		"reports":       usageReports,
+		"average_usage": averageUsage,
+	})
 }
 
 func (h *Handler) CalculateRentalCost(c *gin.Context) {
