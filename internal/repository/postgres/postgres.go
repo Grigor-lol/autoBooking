@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Username string
 	Password string
+	DBName   string
 }
 
 const (
@@ -30,7 +31,7 @@ const (
 )
 
 func NewPostgresDB(cfg Config) (*sqlx.DB, error) {
-	connStr := fmt.Sprintf("user=%s password=%s dbname=postgres sslmode=disable", cfg.Username, cfg.Password)
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", cfg.Username, cfg.Password, cfg.DBName)
 	db, err := sqlx.Connect("postgres", connStr)
 	if err != nil {
 		return nil, err

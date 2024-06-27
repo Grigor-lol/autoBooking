@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"autoBron"
+	"autoBron/pkg/autoBooking"
 	"github.com/gin-gonic/gin"
 )
 
 type Service interface {
-	CheckAvailability(id int, period *autoBron.AvailabilityPeriod) (bool, error)
-	CreateBooking(booking *autoBron.BookingRequest) error
-	GenerateReport(month uint8, year int) ([]autoBron.CarUsageReport, float64, error)
-	CalculateRentalCost(id int, period *autoBron.AvailabilityPeriod) (float32, error)
+	CheckAvailability(id int, period *autoBooking.AvailabilityPeriod) (bool, error)
+	CreateBooking(id int, period *autoBooking.AvailabilityPeriod) error
+	GenerateReport(month uint8, year int) ([]autoBooking.CarUsageReport, float64, error)
+	CalculateRentalCost(id int, period *autoBooking.AvailabilityPeriod) (float32, error)
 }
 
 type Handler struct {
@@ -27,7 +27,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	router.GET("/availability/:car_id", h.CheckAvailability)
 	router.GET("/cost/:car_id", h.CalculateRentalCost)
-	router.POST("/book", h.CreateBooking)
+	router.POST("/book/:car_id", h.CreateBooking)
 	router.GET("/report", h.GenerateReport)
 
 	return router

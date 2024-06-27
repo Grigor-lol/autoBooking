@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"autoBron"
+	"autoBron/pkg/autoBooking"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -16,7 +16,7 @@ func (h *Handler) CheckAvailability(c *gin.Context) {
 		return
 	}
 
-	body := new(autoBron.AvailabilityPeriod)
+	body := new(autoBooking.AvailabilityPeriod)
 	err = c.ShouldBindJSON(body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request body: %s", err.Error())})
@@ -33,7 +33,13 @@ func (h *Handler) CheckAvailability(c *gin.Context) {
 }
 
 func (h *Handler) CreateBooking(c *gin.Context) {
-	req := new(autoBron.BookingRequest)
+	carID, err := strconv.Atoi(c.Param("car_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid car ID: %s", err.Error())})
+		return
+	}
+
+	req := new(autoBooking.AvailabilityPeriod)
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -41,7 +47,7 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 
 	logrus.Info(req.StartDate)
 
-	err := h.service.CreateBooking(req)
+	err = h.service.CreateBooking(carID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -51,7 +57,7 @@ func (h *Handler) CreateBooking(c *gin.Context) {
 }
 
 func (h *Handler) GenerateReport(c *gin.Context) {
-	month, err := strconv.Atoi(c.Param("month"))
+	month, err := strconv.Atoi(c.Query("month"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid month parameter: %s", err.Error())})
 		return
@@ -62,7 +68,7 @@ func (h *Handler) GenerateReport(c *gin.Context) {
 		return
 	}
 
-	year, err := strconv.Atoi(c.Param("year"))
+	year, err := strconv.Atoi(c.Query("year"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid year parameter: %s", err.Error())})
 		return
@@ -92,7 +98,7 @@ func (h *Handler) CalculateRentalCost(c *gin.Context) {
 		return
 	}
 
-	req := new(autoBron.AvailabilityPeriod)
+	req := new(autoBooking.AvailabilityPeriod)
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -100,7 +106,7 @@ func (h *Handler) CalculateRentalCost(c *gin.Context) {
 
 	cost, err := h.service.CalculateRentalCost(carID, req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

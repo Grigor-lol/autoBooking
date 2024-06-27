@@ -1,14 +1,14 @@
 package service
 
 import (
-	"autoBron"
+	"autoBron/pkg/autoBooking"
 	"time"
 )
 
 type Repository interface {
-	CheckAvailability(id int, period *autoBron.AvailabilityPeriod) (bool, error)
-	CreateBooking(booking *autoBron.BookingRequest) error
-	GetCarUsageReport(startDate, endDate time.Time) ([]autoBron.CarUsage, error)
+	CheckAvailability(id int, period *autoBooking.AvailabilityPeriod) (bool, error)
+	CreateBooking(id int, period *autoBooking.AvailabilityPeriod) error
+	GetCarUsageReport(startDate, endDate time.Time) ([]autoBooking.CarUsage, error)
 
 	HasBufferPeriod(carID int, startDate, endDate time.Time) (bool, error)
 }

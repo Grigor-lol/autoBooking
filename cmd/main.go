@@ -2,10 +2,10 @@ package main
 
 import (
 	"autoBron"
-	"autoBron/pkg/handler"
-	"autoBron/pkg/repository"
-	"autoBron/pkg/repository/postgres"
-	"autoBron/pkg/service"
+	"autoBron/internal/handler"
+	"autoBron/internal/repository"
+	"autoBron/internal/repository/postgres"
+	"autoBron/internal/service"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -27,6 +27,7 @@ func main() {
 
 	db, err := postgres.NewPostgresDB(postgres.Config{
 		Username: viper.GetString("db.username"),
+		DBName:   viper.GetString("db.name"),
 		Password: os.Getenv("DB_PASSWORD"),
 	})
 
