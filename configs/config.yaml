@@ -1,4 +1,5 @@
 port: "8080"
 db:
+  host: "192.168.23.131"
   username: "postgres"
   name: "postgres"

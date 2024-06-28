@@ -26,6 +26,7 @@ func main() {
 	}
 
 	db, err := postgres.NewPostgresDB(postgres.Config{
+		Host:     viper.GetString("db.host"),
 		Username: viper.GetString("db.username"),
 		DBName:   viper.GetString("db.name"),
 		Password: os.Getenv("DB_PASSWORD"),
